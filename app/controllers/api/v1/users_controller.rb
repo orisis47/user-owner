@@ -3,7 +3,7 @@ module Api
   module V1
     class UsersController < ActionController::Base
       doorkeeper_for :all
-      load_and_authorize_resource :user, :parent => false
+      load_and_authorize_resource :user, :parent => false, :except => :ability
       respond_to :json
 
       def me
@@ -15,6 +15,12 @@ module Api
         organization = Organization.find(params[:organization_id])
         @users = @users.where(:id => user_ids) if user_ids
         respond_with @users.to_json(:only => [:id, :name, :role])
+      end
+
+      def ability
+        perform_action = params[:perform_action].to_sym
+        klass = params[:resource].classify.constantize
+        respond_with({ :result => can?(perform_action, klass) })
       end
 
       private
